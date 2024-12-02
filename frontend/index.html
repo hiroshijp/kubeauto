@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.3.2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@1.27.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.0.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-streaming@2.0.0"></script>
+</head>
+
+<body>
+
+<canvas id="myChart"></canvas>
+<script>
+    const config = {
+        type: 'line',
+        data: {
+          datasets: [
+            {
+                label: 'cpu',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                borderColor: 'rgb(255, 99, 132)',
+                data: []
+            },
+            {
+                label: 'memory',
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgb(54, 162, 235)',
+                data: []
+            },
+          ]
+        },
+        options: {
+          scales: {
+            x: {
+              type: 'realtime',
+              realtime:{
+                duration: 200000,
+                delay: 10000,
+                refresh: 10000,
+                onRefresh: chart => {
+
+                    fetch('http://localhost:8080/api')
+                        .then(response => response.json())
+                        .then(data => {
+                            cpuUsage = data.cpu_usage;
+                            memUsage = data.mem_usage;
+                        })
+                        .catch(error => console.error('Error fetching data:', error));
+                    const now = Date.now();
+                    chart.data.datasets[0].data.push({
+                        x: now,
+                        y: cpuUsage
+                    });
+                    chart.data.datasets[1].data.push({
+                        x: now,
+                        y: memUsage
+                    });
+                }
+              }
+            },
+            y: {
+                title: {
+                    display: true,
+                    text: '使用率(%)'
+                }
+            }
+          }
+        }
+    };
+
+    const myChart = new Chart(
+        document.getElementById('myChart'),
+        config
+    )
+</script>
+</body>
+</html>
+
